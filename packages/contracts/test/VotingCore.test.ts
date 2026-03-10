@@ -12,12 +12,19 @@ describe("VotingCore", function () {
     beforeEach(async function () {
         [owner, addr1, addr2] = await ethers.getSigners();
         const VotingCoreFactory = await ethers.getContractFactory("VotingCore");
-        votingCore = await VotingCoreFactory.deploy();
+        votingCore = await VotingCoreFactory.deploy() as VotingCore;
     });
+
+    const getLatestBlockTimestamp = async () => {
+        const blockNumBefore = await ethers.provider.getBlockNumber();
+        const blockBefore = await ethers.provider.getBlock(blockNumBefore);
+        return blockBefore?.timestamp ?? 0;
+    };
 
     describe("Election Creation", function () {
         it("Should create an election successfully", async function () {
-            const startTime = Math.floor(Date.now() / 1000) + 60;
+            const timestamp = await getLatestBlockTimestamp();
+            const startTime = timestamp + 60;
             const endTime = startTime + 3600;
             await votingCore.createElection("Test Election", "Description", startTime, endTime, "hash");
 
@@ -27,7 +34,8 @@ describe("VotingCore", function () {
         });
 
         it("Should fail if start time is after end time", async function () {
-            const startTime = Math.floor(Date.now() / 1000) + 3600;
+            const timestamp = await getLatestBlockTimestamp();
+            const startTime = timestamp + 3600;
             const endTime = startTime - 60;
             await expect(
                 votingCore.createElection("Test", "Desc", startTime, endTime, "hash")
@@ -37,7 +45,8 @@ describe("VotingCore", function () {
 
     describe("Candidate Management", function () {
         beforeEach(async function () {
-            const startTime = Math.floor(Date.now() / 1000) + 60;
+            const timestamp = await getLatestBlockTimestamp();
+            const startTime = timestamp + 60;
             const endTime = startTime + 3600;
             await votingCore.createElection("Test Election", "Description", startTime, endTime, "hash");
         });
@@ -60,7 +69,8 @@ describe("VotingCore", function () {
         let endTime: number;
 
         beforeEach(async function () {
-            startTime = Math.floor(Date.now() / 1000) + 10;
+            const timestamp = await getLatestBlockTimestamp();
+            startTime = timestamp + 10;
             endTime = startTime + 3600;
             await votingCore.createElection("Test Election", "Description", startTime, endTime, "hash");
             await votingCore.addCandidate(1, "Candidate 1", "imageHash");
@@ -68,8 +78,7 @@ describe("VotingCore", function () {
         });
 
         it("Should cast a vote successfully", async function () {
-            // Fast forward time to start
-            await ethers.provider.send("evm_increaseTime", [15]);
+            await ethers.provider.send("evm_increaseTime", [100]);
             await ethers.provider.send("evm_mine", []);
 
             await votingCore.connect(addr1).castVote(1, 1);
@@ -79,7 +88,7 @@ describe("VotingCore", function () {
         });
 
         it("Should prevent double voting", async function () {
-            await ethers.provider.send("evm_increaseTime", [15]);
+            await ethers.provider.send("evm_increaseTime", [100]);
             await ethers.provider.send("evm_mine", []);
 
             await votingCore.connect(addr1).castVote(1, 1);
