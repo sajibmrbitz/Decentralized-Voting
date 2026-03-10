@@ -1,0 +1,15 @@
+﻿{
+  "name": "decentralized-voting",
+  "private": true,
+  "scripts": {
+    "test:contracts": "npm run --prefix packages/contracts test",
+    "dev:frontend": "npm run --prefix packages/frontend dev",
+    "dev:backend": "npm run --prefix packages/backend dev",
+    "build:all": "npm run --prefix packages/contracts compile && npm run --prefix packages/frontend build && npm run --prefix packages/backend build",
+    "format": "prettier --write \"**/*.{ts,tsx,sol,md,json}\""
+  },
+  "devDependencies": {
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0"
+  }
+}
